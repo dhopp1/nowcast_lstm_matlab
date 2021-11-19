@@ -36,42 +36,36 @@ Further explanation of the background problem can be found in [this UNCTAD resea
 Given `my_dfs` = a dataframe / table with a date column + monthly data + a quarterly target series to run the model on, usage is as follows:
 
 ```MATLAB
-addpath('/your_path/nowcast_lstm_matlab/'); % directing MATLAB to this repo
-LSTM = nowcast_lstm_matlab; % instantiating the object from which to call the functions
-LSTM.initialize_session(); % initializing the accompanying Python session
-
-% for simplicity in interaction with Python, it's best to store the date column as strings of format "YYYY-MM-DD" when training or predicting with models
+addpath('/your_path/nowcast_lstm_matlab/functions'); % directing MATLAB to this repo
+initialize_session(); % initializing the accompanying Python session
 
 % data read
 my_df = readtable("data.csv");
-% making data available in Python session. 2nd argument should be set to string name of dataframe in MATLAB. 3rd argument is name of date column in dataframe.
-LSTM.df_matlab_to_python(my_df, "my_df", "date")
 
 % setting LSTM parameters (workaround for no named parameters/default values in MATLAB)
-% only these four parameters need to be set, the rest will be set to defaults if not specified
+% only these three parameters need to be set, the rest will be set to defaults if not specified
 my_params = containers.Map;
-my_params('python_model_name') = 'model'; % name of model in Python, used later for predictions and saving trained model
-my_params('data') = 'my_df'; % name of dataframe to train model on in Python
+my_params('data') = my_df;
 my_params('target_variable') = 'target_name';
 my_params('n_timesteps') = 12;
 
 % generating full set of LSTM parameters including defaults not specified in `my_params`
-params = LSTM.gen_lstm_parameters(my_params);
+params = gen_lstm_parameters(my_params);
 
 % instantiating LSTM model. {:} notation is necessary at end of params argument
-LSTM.LSTM(params{:})
+model = LSTM(params{:})
 
-% training LSTM model, 1st argument is Python model name specified in `my_params('python_model_name')`, second is whether or not to display training epoch losses at the end of training.
-LSTM.train("model", false);
+% training LSTM model, second argument is whether or not to display training epoch losses at the end of training.
+train(model, false);
 
 % predicting on a trained model, last argument specifies whether to only produce predictions for periods with an actual value present
-predictions = LSTM.predict("model", my_df, "my_df", "date", true);
+predictions = predict(model, my_df, true);
 
 % saving a trained model
-LSTM.save_lstm("model", "model.pkl");
+save_lstm(model, "model.pkl");
 
-% loading a trained model, the first parameter is what the model will be called in Python
-LSTM.load("new_model_name", "model.pkl");
+% loading a trained model
+new_model = load("model.pkl");
 
 ```
 
@@ -98,5 +92,5 @@ Assuming a model has been instantiated and trained with `LSTM(...); train(...)`,
 - `predict`: to generate predictions on new data
 - `save_lstm`: to save a trained model to disk
 - `load_lstm`: to load a saved model from disk
-- `ragged_preds(python_model_name, pub_lags, lag, data, python_data_name, date_column, start_date, end_date)`: adds artificial missing data then returns a dataframe with date, actuals, and predictions. This is especially useful as a testing mechanism, to generate datasets to see how a trained model would have performed at different synthetic vintages or periods of time in the past. `pub_lags` should be a list of ints (in the same order as the columns of the original data) of length n\_features (i.e. excluding the target variable) dictating the normal publication lag of each of the variables. `lag` is an int of how many periods back we want to simulate being, interpretable as last period relative to target period. E.g. if we are nowcasting June, `lag = -1` will simulate being in May, where May data is published for variables with a publication lag of 0. It will fill with missings values that wouldn't have been available yet according to the publication lag of the variable + the lag parameter. It will fill missings with the same method specified in the `fill_ragged_edges_func` parameter in model instantiation.
-- `gen_news(python_model_name, target_period, old_data, new_data, date_column)`: Generates news between one data release to another, adding an element of causal inference to the network. Works by holding out new data column by column, recording differences between this prediction and the prediction on full data, and registering this difference as the new data's contribution to the prediction. Contributions are then scaled to equal the actual observed difference in prediction in the aggregate between the old dataset and the new dataset.
+- `ragged_preds(model, pub_lags, lag, data, start_date, end_date)`: adds artificial missing data then returns a dataframe with date, actuals, and predictions. This is especially useful as a testing mechanism, to generate datasets to see how a trained model would have performed at different synthetic vintages or periods of time in the past. `pub_lags` should be a list of ints (in the same order as the columns of the original data) of length n\_features (i.e. excluding the target variable) dictating the normal publication lag of each of the variables. `lag` is an int of how many periods back we want to simulate being, interpretable as last period relative to target period. E.g. if we are nowcasting June, `lag = -1` will simulate being in May, where May data is published for variables with a publication lag of 0. It will fill with missings values that wouldn't have been available yet according to the publication lag of the variable + the lag parameter. It will fill missings with the same method specified in the `fill_ragged_edges_func` parameter in model instantiation.
+- `gen_news(model, target_period, old_data, new_data)`: Generates news between one data release to another, adding an element of causal inference to the network. Works by holding out new data column by column, recording differences between this prediction and the prediction on full data, and registering this difference as the new data's contribution to the prediction. Contributions are then scaled to equal the actual observed difference in prediction in the aggregate between the old dataset and the new dataset.
