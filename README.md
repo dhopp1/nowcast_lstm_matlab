@@ -1,6 +1,6 @@
 # nowcast_lstm_matlab
 
-MATLAB wrapper for [nowcast_lstm](https://github.com/dhopp1/nowcast_lstm) Python library. [R](https://github.com/dhopp1/nowcastLSTM) and [Julia](https://github.com/dhopp1/NowcastLSTM.jl) wrappers also exists. Long short-term memory neural networks for economic nowcasting. More background in [this](https://unctad.org/webflyer/economic-nowcasting-long-short-term-memory-artificial-neural-networks-lstm) UNCTAD research paper.
+MATLAB wrapper for [nowcast_lstm](https://github.com/dhopp1/nowcast_lstm) Python library. [R](https://github.com/dhopp1/nowcastLSTM) and [Julia](https://github.com/dhopp1/NowcastLSTM.jl) wrappers also exists. Long short-term memory neural networks for economic nowcasting. More background in [this](https://www.researchgate.net/publication/363509881_Economic_Nowcasting_with_Long_Short-Term_Memory_Artificial_Neural_Networks_LSTM) paper in the Journal of Official Statistics.
 
 # Installation and setup
 **Installing the library in MATLAB**: Simply clone this repo and direct MATLAB to `nowcast_lstm_matlab.m` by putting `addpath('/your_path/nowcast_lstm_matlab/');` at the top of your code. You may have to direct MATLAB to your Python installation the first time by running `pe = pyenv('Version', path_to_python);`
